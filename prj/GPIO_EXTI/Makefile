@@ -83,11 +83,14 @@ proj: $(PROJ_NAME).elf
 $(PROJ_NAME).elf: $(OBJS_CC) $(OBJS_AS)
 	@echo Linking [$@]
 	@$(LD) -o $@ $^ $(LDFLAGS)
-#	$(OBJCOPY) -O ihex $(PROJ_NAME).elf $(PROJ_NAME).hex
-#	$(OBJCOPY) -O binary $(PROJ_NAME).elf $(PROJ_NAME).bin
+	$(OBJCOPY) -O ihex $(PROJ_NAME).elf $(PROJ_NAME).hex
+	$(OBJCOPY) -O binary $(PROJ_NAME).elf $(PROJ_NAME).bin
 
-clean:
-	rm -f *.o $(PROJ_NAME).elf $(PROJ_NAME).hex $(PROJ_NAME).bin
+clean-cc:
+	rm -f $(OBJS_CC) $(PROJ_NAME).elf $(PROJ_NAME).hex $(PROJ_NAME).bin
+	
+clean: clean-cc
+	rm -f $(OBJS_AS)
 
 # Flash the STM32F4
 burn: proj
