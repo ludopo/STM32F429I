@@ -6,12 +6,29 @@ PROJ_NAME=GPIO_EXTI
 
 # Put your source files here (or *.c, etc)
 SRCS_PATH=../../STM32Cube_FW_F4_V1.3.0_lite/Projects/STM32F429I-Discovery/Examples/GPIO/GPIO_EXTI/Src
-SRCS  = $(SRCS_PATH)/main.c 
-SRCS += $(SRCS_PATH)/stm32f4xx_it.c 
-SRCS += $(SRCS_PATH)/system_stm32f4xx.c
+SRCS_CC  = $(SRCS_PATH)/main.c 
+SRCS_CC += $(SRCS_PATH)/stm32f4xx_it.c 
+SRCS_CC += $(SRCS_PATH)/system_stm32f4xx.c
+
+SRCS_HAL_PATH=../../STM32Cube_FW_F4_V1.3.0_lite/Drivers/STM32F4xx_HAL_Driver/Src
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_cortex.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_dma.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_flash.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_flash_ex.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_gpio.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_i2c.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_i2c_ex.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_pwr.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_pwr_ex.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_rcc.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_rcc_ex.c
+SRCS_CC += $(SRCS_HAL_PATH)/stm32f4xx_hal_spi.c
+
+SRCS_CC += ../../STM32Cube_FW_F4_V1.3.0_lite/Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery.c
 
 # add startup file to build
-ASMS = $(SRCS_PATH)/../TrueSTUDIO/startup_stm32f429xx.s 
+SRCS_AS = $(SRCS_PATH)/../TrueSTUDIO/startup_stm32f429xx.s 
 
 INC_DIRS += -I.
 INC_DIRS += -I$(SRCS_PATH)/../Inc
@@ -27,22 +44,27 @@ STLINK=~/STM32/stlink.git
 #######################################################################################
 
 CC=arm-none-eabi-gcc
+AS=arm-none-eabi-as
+# LD=arm-none-eabi-ld: gcc used insteqd of ld -> a bit smarter (find libc.a)
+LD=arm-none-eabi-gcc
+
 OBJCOPY=arm-none-eabi-objcopy
 
 CFLAGS  = -g -O2 -Wall
-CFLAGS += -DSTM32F429xx
+CFLAGS += -DSTM32F429xx -DUSE_HAL_DRIVER -DUSE_STM32F429I_DISCO
 CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 CFLAGS += $(INC_DIRS)
 
+AFLAGS = -g -Wall
 
-
-LDFLAGS  = $(CFLAGS)
+LDFLAGS  = $(CFLAGS) 
 LDFLAGS += -T$(SRCS_PATH)/../TrueSTUDIO/STM32F429I-Discovery/STM32F429ZI_FLASH.ld
+LDFLAGS += -specs=nosys.specs
 
 
-OBJS = $(SRCS:.c=.o)
-OBJS_ASM = $(SRCS:.s=.o)
+OBJS_CC = $(SRCS_CC:.c=.o)
+OBJS_AS = $(SRCS_AS:.s=.o)
 
 .PHONY: proj
 
@@ -51,16 +73,16 @@ all: proj
 proj: $(PROJ_NAME).elf
 
 %.o: %.c
-	@echo Compiling [$<]
+	@echo CC-Compiling [$<]
 	@$(CC) -o $@ -c $< $(CFLAGS)
 	
 %.o: %.s
-	@echo Compiling [$<]
-	@$(CC) -o $@ $< $(CFLAGS)
+	@echo AS-Compiling [$<]
+	@$(AS) -o $@ $< $(AFLAGS)
 
-$(PROJ_NAME).elf: $(OBJS) $(OBJS_ASM)
-	@echo Linking[$@]
-	@$(CC) -o $@ $^ $(LDFLAGS)
+$(PROJ_NAME).elf: $(OBJS_CC) $(OBJS_AS)
+	@echo Linking [$@]
+	@$(LD) -o $@ $^ $(LDFLAGS)
 #	$(OBJCOPY) -O ihex $(PROJ_NAME).elf $(PROJ_NAME).hex
 #	$(OBJCOPY) -O binary $(PROJ_NAME).elf $(PROJ_NAME).bin
 
